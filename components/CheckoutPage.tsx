@@ -243,7 +243,7 @@ export default function CheckoutPage() {
                   Você receberá um e-mail de confirmação em breve.
                 </p>
                 <a
-                  href="/"
+                  href="/loja.html"
                   className="inline-block px-6 py-3 bg-dark text-alluri-white text-[0.72rem] tracking-[0.2em] uppercase hover:bg-gold transition-colors"
                 >
                   Voltar à Loja
@@ -282,7 +282,7 @@ export default function CheckoutPage() {
 
       {/* Footer */}
       <footer className="border-t border-alluri-border py-5 px-4 text-center text-[0.65rem] text-alluri-muted tracking-[0.08em]">
-        © 2025 Alluri · Pagamentos processados com segurança pela Appmax
+        © 2025 Alluri · Pagamentos processados com segurança pelo Mercado Pago
       </footer>
     </div>
   )
