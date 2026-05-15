@@ -89,6 +89,15 @@ export interface OrderInsert {
   customer_phone?: string
   city?: string
   state?: string
+  address_data?: {
+    street: string
+    number: string
+    complement?: string
+    neighborhood: string
+    city: string
+    state: string
+    zipCode: string
+  }
   items: unknown
   total: number
   payment_method: string

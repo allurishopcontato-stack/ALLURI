@@ -75,31 +75,44 @@ function buildCustomerEmail(
 function buildOwnerEmail(
   customerName: string,
   customerEmail: string,
+  customerPhone: string,
   orderId: string,
   items: CartItem[],
   paymentMethod: string,
-  city: string,
-  state: string,
+  addressData: Record<string, string> | null,
 ) {
   const total = totalCart(items).toFixed(2).replace('.', ',')
   const method = paymentMethod === 'pix' ? 'PIX' : 'Cartão de Crédito'
   const itemsList = items.map(i => `• ${i.name} x${i.quantity} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`).join('\n')
 
+  const addressLines = addressData ? [
+    `${addressData.street ?? ''}, ${addressData.number ?? ''}${addressData.complement ? ` — ${addressData.complement}` : ''}`,
+    `${addressData.neighborhood ?? ''} — ${addressData.city ?? ''}/${addressData.state ?? ''}`,
+    `CEP: ${addressData.zipCode ?? ''}`,
+  ].filter(Boolean).join('<br>') : '-'
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <body style="margin:0;padding:0;background:#0d1117;font-family:sans-serif">
-  <div style="max-width:500px;margin:40px auto;background:#161b22;border:1px solid #30363d;padding:28px">
+  <div style="max-width:520px;margin:40px auto;background:#161b22;border:1px solid #30363d;padding:28px">
     <h2 style="margin:0 0 4px;color:#f0d9c8;font-size:18px;font-weight:400">🛍️ Novo pedido recebido!</h2>
     <p style="margin:0 0 20px;color:#8b949e;font-size:13px">Pedido #${orderId} — ${method}</p>
 
+    <p style="margin:0 0 8px;color:#6e7681;font-size:11px;letter-spacing:2px;text-transform:uppercase">Cliente</p>
     <div style="background:#0d1117;border:1px solid #21262d;padding:16px;margin-bottom:16px">
-      <p style="margin:0 0 4px;color:#f0d9c8;font-size:14px;font-weight:500">${customerName}</p>
-      <p style="margin:0 0 4px;color:#8b949e;font-size:13px">${customerEmail}</p>
-      <p style="margin:0;color:#8b949e;font-size:13px">${city} / ${state}</p>
+      <p style="margin:0 0 6px;color:#f0d9c8;font-size:14px;font-weight:500">${customerName}</p>
+      <p style="margin:0 0 4px;color:#8b949e;font-size:13px">📧 ${customerEmail}</p>
+      <p style="margin:0;color:#8b949e;font-size:13px">📱 ${customerPhone || '-'}</p>
     </div>
 
+    <p style="margin:0 0 8px;color:#6e7681;font-size:11px;letter-spacing:2px;text-transform:uppercase">Endereço de entrega</p>
     <div style="background:#0d1117;border:1px solid #21262d;padding:16px;margin-bottom:16px">
-      <pre style="margin:0;color:#c9d1d9;font-size:13px;white-space:pre-wrap">${itemsList}</pre>
+      <p style="margin:0;color:#8b949e;font-size:13px;line-height:1.8">${addressLines}</p>
+    </div>
+
+    <p style="margin:0 0 8px;color:#6e7681;font-size:11px;letter-spacing:2px;text-transform:uppercase">Itens</p>
+    <div style="background:#0d1117;border:1px solid #21262d;padding:16px;margin-bottom:16px">
+      <pre style="margin:0;color:#c9d1d9;font-size:13px;white-space:pre-wrap;line-height:1.8">${itemsList}</pre>
     </div>
 
     <div style="border-top:1px solid #30363d;padding-top:14px;text-align:right">
@@ -114,17 +127,17 @@ export async function sendOrderConfirmationEmails(params: {
   orderId: string
   customerName: string
   customerEmail: string
+  customerPhone?: string
   items: CartItem[]
   paymentMethod: string
-  city?: string
-  state?: string
+  addressData?: Record<string, string> | null
 }) {
   if (!RESEND_KEY) {
     console.warn('[email] RESEND_API_KEY não configurada — email não enviado')
     return
   }
 
-  const { orderId, customerName, customerEmail, items, paymentMethod, city = '', state = '' } = params
+  const { orderId, customerName, customerEmail, customerPhone = '', items, paymentMethod, addressData = null } = params
 
   const send = async (to: string[], subject: string, html: string) => {
     try {
@@ -151,7 +164,7 @@ export async function sendOrderConfirmationEmails(params: {
     send(
       [OWNER_EMAIL],
       `Novo pedido #${orderId} — R$ ${totalCart(items).toFixed(2).replace('.', ',')}`,
-      buildOwnerEmail(customerName, customerEmail, orderId, items, paymentMethod, city, state),
+      buildOwnerEmail(customerName, customerEmail, customerPhone, orderId, items, paymentMethod, addressData),
     ),
   ])
 }

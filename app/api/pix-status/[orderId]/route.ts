@@ -26,10 +26,10 @@ export async function GET(
           orderId:       mpId,
           customerName:  String(order.customer_name ?? ''),
           customerEmail: String(order.customer_email ?? ''),
+          customerPhone: String(order.customer_phone ?? ''),
           items:         (order.items as never[]) ?? [],
           paymentMethod: 'pix',
-          city:          String(order.city ?? ''),
-          state:         String(order.state ?? ''),
+          addressData:   (order.address_data as Record<string, string>) ?? null,
         })
       } catch (e) {
         console.error('[pix-status email]', e)

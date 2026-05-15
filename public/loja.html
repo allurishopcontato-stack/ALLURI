@@ -1153,6 +1153,12 @@ async function renderOrders(){
         <td>
           <div style="font-size:.83rem;color:#c9d1d9">${o.customer_name||'-'}</div>
           <div style="font-size:.72rem;color:#6e7681">${o.customer_email||''}</div>
+          <div style="font-size:.72rem;color:#6e7681">${o.customer_phone||''}</div>
+          ${o.address_data ? `<div style="font-size:.68rem;color:#484f58;margin-top:2px">
+            ${o.address_data.street||''}, ${o.address_data.number||''}
+            ${o.address_data.complement?'— '+o.address_data.complement:''}<br>
+            ${o.address_data.neighborhood||''} — ${o.address_data.city||''}/${o.address_data.state||''} — CEP ${o.address_data.zipCode||''}
+          </div>` : ''}
         </td>
         <td style="font-size:.78rem;color:#8b949e;max-width:180px">${
           Array.isArray(o.items)?o.items.map(i=>`${i.name} x${i.quantity}`).join(', '):o.items||'-'

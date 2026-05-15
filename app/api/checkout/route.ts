@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
         customer_phone:   personal.phone,
         city:             address.city,
         state:            address.state,
+        address_data:     address,
         items:            items,
         total:            totalCart(items),
         payment_method:   'pix',
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
         customer_phone:   personal.phone,
         city:             address.city,
         state:            address.state,
+        address_data:     address,
         items:            items,
         total:            totalCart(items),
         payment_method:   'credit_card',
@@ -68,10 +70,10 @@ export async function POST(req: NextRequest) {
           orderId:       result.orderId ?? '',
           customerName:  `${personal.firstName} ${personal.lastName}`,
           customerEmail: personal.email,
+          customerPhone: personal.phone,
           items,
           paymentMethod: 'credit_card',
-          city:          address.city,
-          state:         address.state,
+          addressData:   address as unknown as Record<string, string>,
         })
       }
 
