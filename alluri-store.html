@@ -125,11 +125,10 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .var-btn.selected{border-color:var(--gold);background:var(--rose-light);color:var(--dark);font-weight:500}
 .var-error{font-size:.7rem;color:#e53e3e;margin-top:.4rem;display:none}
 /* Admin variações */
-.variation-row{display:grid;grid-template-columns:1fr 2fr 32px;gap:.5rem;margin-bottom:.5rem;align-items:start}
-.btn-add-variation{padding:.5rem 1rem;background:transparent;border:1px dashed #30363d;color:#6e7681;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;margin-top:.3rem}
-.btn-add-variation:hover{border-color:#b8935a;color:#b8935a}
-.btn-remove-var{background:#3a1a1a;border:none;color:#f85149;cursor:pointer;font-size:.75rem;height:100%;padding:0 .5rem;transition:background .2s}
-.btn-remove-var:hover{background:#f85149;color:#fff}
+.var-toggle-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem}
+.var-toggle-row label{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:#8b949e;cursor:pointer;user-select:none}
+.var-toggle-row input[type=checkbox]{width:15px;height:15px;accent-color:#b8935a;cursor:pointer}
+.var-opts-input{display:none;margin-top:.35rem}
 
 /* NOTIFICAÇÃO */
 .notif{position:fixed;bottom:2rem;right:2rem;background:var(--dark);color:var(--white);padding:.88rem 1.5rem;font-size:.76rem;letter-spacing:.1em;opacity:0;transition:all .35s;pointer-events:none;z-index:999;border-left:3px solid var(--gold)}
@@ -643,9 +642,21 @@ table.admin-table{width:100%;border-collapse:collapse}
       </div>
       <input type="hidden" id="fCheckout" value="">
       <div class="form-group full">
-        <label class="form-label">Variações (Cor, Tamanho, Material...)</label>
-        <div id="variationsList"></div>
-        <button type="button" class="btn-add-variation" onclick="addVariationRow()">+ Adicionar Variação</button>
+        <label class="form-label">Variações (opcional)</label>
+        <div class="var-toggle-row">
+          <label>
+            <input type="checkbox" id="vCor" onchange="toggleVarInput('vCorOpts',this.checked)">
+            Cor
+          </label>
+        </div>
+        <input class="form-input var-opts-input" id="vCorOpts" placeholder="Ex: Dourado, Prateado, Rosé Gold">
+        <div class="var-toggle-row" style="margin-top:.5rem">
+          <label>
+            <input type="checkbox" id="vNum" onchange="toggleVarInput('vNumOpts',this.checked)">
+            Numeração
+          </label>
+        </div>
+        <input class="form-input var-opts-input" id="vNumOpts" placeholder="Ex: 34, 35, 36, 37, 38, 39, 40">
       </div>
     </div>
     <div class="form-actions">
@@ -1100,24 +1111,23 @@ function renderAdminTable(search){
 ══════════════════════════════════════════════════════════ */
 let currentImg='';
 
-function addVariationRow(name='', options=''){
-  const id='var-'+Date.now()+Math.random().toString(36).slice(2);
-  const row=document.createElement('div');
-  row.className='variation-row'; row.id=id;
-  row.innerHTML=`
-    <input class="form-input" placeholder="Ex: Cor" value="${name}">
-    <input class="form-input" placeholder="Ex: Dourado, Prateado, Rosé" value="${options}">
-    <button type="button" class="btn-remove-var" onclick="document.getElementById('${id}').remove()">✕</button>`;
-  document.getElementById('variationsList').appendChild(row);
+function toggleVarInput(id, show){
+  const el=document.getElementById(id);
+  el.style.display=show?'block':'none';
+  if(!show) el.value='';
 }
 
 function getVariationsFromForm(){
-  return Array.from(document.querySelectorAll('#variationsList .variation-row')).map(row=>{
-    const inputs=row.querySelectorAll('input');
-    const name=inputs[0].value.trim();
-    const options=inputs[1].value.split(',').map(o=>o.trim()).filter(Boolean);
-    return name&&options.length?{name,options}:null;
-  }).filter(Boolean);
+  const vars=[];
+  if(document.getElementById('vCor').checked){
+    const opts=document.getElementById('vCorOpts').value.split(',').map(o=>o.trim()).filter(Boolean);
+    if(opts.length) vars.push({name:'Cor',options:opts});
+  }
+  if(document.getElementById('vNum').checked){
+    const opts=document.getElementById('vNumOpts').value.split(',').map(o=>o.trim()).filter(Boolean);
+    if(opts.length) vars.push({name:'Numeração',options:opts});
+  }
+  return vars;
 }
 
 function openProductForm(id){
@@ -1139,8 +1149,13 @@ function openProductForm(id){
       document.getElementById('fStatus').value=p.status||'active';
       document.getElementById('fDesc').value=p.desc||'';
       document.getElementById('fCheckout').value=p.checkoutUrl||'';
-      document.getElementById('variationsList').innerHTML='';
-      (p.variations||[]).forEach(v=>addVariationRow(v.name,(v.options||[]).join(', ')));
+      // Variações
+      ['vCor','vNum'].forEach(id=>{ document.getElementById(id).checked=false; });
+      ['vCorOpts','vNumOpts'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).style.display='none'; });
+      (p.variations||[]).forEach(v=>{
+        if(v.name==='Cor'){ document.getElementById('vCor').checked=true; document.getElementById('vCorOpts').value=(v.options||[]).join(', '); document.getElementById('vCorOpts').style.display='block'; }
+        if(v.name==='Numeração'){ document.getElementById('vNum').checked=true; document.getElementById('vNumOpts').value=(v.options||[]).join(', '); document.getElementById('vNumOpts').style.display='block'; }
+      });
       currentImg=p.img||'';
       if(p.img){
         preview.src=p.img; preview.style.display='block';
@@ -1150,7 +1165,8 @@ function openProductForm(id){
     }
   } else {
     ['fName','fPrice','fOldPrice','fBadge','fDesc','fCheckout'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('variationsList').innerHTML='';
+    ['vCor','vNum'].forEach(id=>{ document.getElementById(id).checked=false; });
+    ['vCorOpts','vNumOpts'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).style.display='none'; });
     document.getElementById('fCat').value='';
     document.getElementById('fStatus').value='active';
   }
