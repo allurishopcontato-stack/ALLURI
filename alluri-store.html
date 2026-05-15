@@ -399,7 +399,7 @@ table.admin-table{width:100%;border-collapse:collapse}
     </div>
     <div class="footer-bottom">
       <span>© 2025 Alluri · Todos os direitos reservados</span>
-      <button class="admin-link" onclick="showAdminLogin()">⚙ Admin</button>
+      <!-- acesso admin removido do visual -->
     </div>
   </footer>
 
@@ -1080,6 +1080,14 @@ function saveCartpanda(){
    INIT
 ══════════════════════════════════════════════════════════ */
 renderProducts('todos');
+
+// Atalho secreto: Ctrl + Shift + A abre o painel admin
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+    e.preventDefault();
+    showAdminLogin();
+  }
+});
 </script>
 </body>
 </html>
