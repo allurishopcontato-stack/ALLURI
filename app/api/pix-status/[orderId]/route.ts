@@ -11,15 +11,17 @@ export async function GET(
   const status = await getPixStatus(mpId)
 
   if (status === 'paid') {
-    // Atualiza status no Supabase
+    // Busca o pedido ANTES de atualizar para saber se já enviou email
+    const orders = await dbGetOrders() as Array<Record<string, unknown>>
+    const order  = orders.find((o) => o.mp_id === mpId)
+    const jaProcessado = order?.status === 'approved'
+
+    // Atualiza status
     await dbUpdateOrderStatus(mpId, 'approved')
 
-    // Envia email apenas uma vez (busca o pedido para checar se já enviou)
-    try {
-      const orders = await dbGetOrders() as Array<Record<string, unknown>>
-      const order  = orders.find((o) => o.mp_id === mpId)
-
-      if (order && order.status !== 'approved') {
+    // Envia email apenas na primeira vez que detecta pagamento
+    if (order && !jaProcessado) {
+      try {
         await sendOrderConfirmationEmails({
           orderId:       mpId,
           customerName:  String(order.customer_name ?? ''),
@@ -29,9 +31,9 @@ export async function GET(
           city:          String(order.city ?? ''),
           state:         String(order.state ?? ''),
         })
+      } catch (e) {
+        console.error('[pix-status email]', e)
       }
-    } catch (e) {
-      console.error('[pix-status email]', e)
     }
   }
 
