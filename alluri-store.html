@@ -657,11 +657,20 @@ const STORAGE_KEY = 'alluri_products';
 const AUTH_KEY = 'alluri_auth';
 const SETTINGS_KEY = 'alluri_settings';
 
-function loadProducts(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaultProducts(); }
-  catch(e){ return getDefaultProducts(); }
+let productsCache = [];
+
+function loadProducts(){ return productsCache; }
+function saveProducts(){ /* substituído pelo Supabase */ }
+
+async function fetchAndCacheProducts(){
+  try{
+    const res = await fetch('/api/products');
+    const data = await res.json();
+    if(Array.isArray(data) && data.length) productsCache = data;
+    else if(!productsCache.length) productsCache = getDefaultProducts();
+  } catch(e){ if(!productsCache.length) productsCache = getDefaultProducts(); }
 }
-function saveProducts(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+
 function loadSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{}; }catch(e){return {};} }
 function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
 function getAdminCreds(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY))||{}; }catch(e){return {};} }
@@ -1020,12 +1029,11 @@ function handleImgUpload(e){
   reader.readAsDataURL(file);
 }
 
-function saveProduct(){
+async function saveProduct(){
   const name=document.getElementById('fName').value.trim();
   const cat=document.getElementById('fCat').value;
   const price=document.getElementById('fPrice').value.trim();
   if(!name||!cat||!price){alert('Preencha os campos obrigatórios: Nome, Categoria e Preço.');return;}
-  const prods=loadProducts();
   const editId=document.getElementById('editingId').value;
   const catEmojis={perfume:'🫧',brinco:'💎',colar:'📿',pulseira:'✨',anel:'💍'};
   const data={
@@ -1039,17 +1047,17 @@ function saveProduct(){
     img:currentImg,
     emoji:catEmojis[cat]||'🛍️'
   };
-  if(editId){
-    const idx=prods.findIndex(p=>p.id===parseInt(editId));
-    if(idx>-1)prods[idx]=data;
-  } else {
-    prods.push(data);
-  }
-  saveProducts(prods);
-  closeProductForm();
-  renderAdminStats();
-  renderAdminTable('');
-  showNotif('✓ Produto salvo com sucesso');
+  try{
+    const url=editId?`/api/products/${editId}`:'/api/products';
+    const method=editId?'PUT':'POST';
+    await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    await fetchAndCacheProducts();
+    closeProductForm();
+    renderAdminStats();
+    renderAdminTable('');
+    renderProducts(currentFilter);
+    showNotif('✓ Produto salvo com sucesso');
+  } catch(e){ alert('Erro ao salvar produto. Tente novamente.'); }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1058,10 +1066,12 @@ function saveProduct(){
 let deleteId=null;
 function askDelete(id){ deleteId=id; document.getElementById('confirmOverlay').classList.add('open'); }
 function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('open'); deleteId=null; }
-function confirmDelete(){
+async function confirmDelete(){
   if(!deleteId)return;
-  const prods=loadProducts().filter(p=>p.id!==deleteId);
-  saveProducts(prods);
+  try{
+    await fetch(`/api/products/${deleteId}`,{method:'DELETE'});
+    await fetchAndCacheProducts();
+  } catch(e){ alert('Erro ao excluir produto.'); return; }
   closeConfirm();
   renderAdminStats();
   renderAdminTable('');
@@ -1094,8 +1104,10 @@ function saveCartpanda(){
 /* ══════════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════════ */
-renderProducts('todos');
-initAdmin();
+fetchAndCacheProducts().then(()=>{
+  renderProducts('todos');
+  initAdmin();
+});
 
 // Acesso admin via URL: loja.html#admin-alluri
 if(window.location.hash === '#admin-alluri') showAdminLogin();
