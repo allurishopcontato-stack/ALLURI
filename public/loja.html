@@ -121,6 +121,15 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .notif{position:fixed;bottom:2rem;right:2rem;background:var(--dark);color:var(--white);padding:.88rem 1.5rem;font-size:.76rem;letter-spacing:.1em;opacity:0;transition:all .35s;pointer-events:none;z-index:999;border-left:3px solid var(--gold)}
 .notif.show{opacity:1}
 
+/* TOASTS ADMIN */
+.toast-wrap{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.6rem;pointer-events:none}
+.toast{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.2rem;min-width:260px;max-width:360px;font-family:'Jost',sans-serif;font-size:.8rem;letter-spacing:.04em;border-radius:2px;box-shadow:0 4px 20px rgba(0,0,0,.18);transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0;pointer-events:all}
+.toast.show{transform:translateX(0);opacity:1}
+.toast-success{background:#1a3a2a;border-left:3px solid #3fb950;color:#b7f0c8}
+.toast-error{background:#3a1010;border-left:3px solid #f85149;color:#ffb3b3}
+.toast-info{background:#1a1f3a;border-left:3px solid #b8935a;color:#e8d5b0}
+.toast-icon{font-size:1rem;flex-shrink:0}
+
 /* ── ADMIN PANEL ── */
 .admin-view{background:#0d1117;min-height:100vh;font-family:'Jost',sans-serif;color:var(--admin-text)}
 
@@ -425,6 +434,8 @@ table.admin-table{width:100%;border-collapse:collapse}
   </div>
 
   <div class="notif" id="notif">✓ &nbsp; Produto adicionado ao carrinho</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
 
 </div><!-- /store-view -->
 
@@ -847,6 +858,20 @@ function showNotif(msg){
   setTimeout(()=>n.classList.remove('show'),2600);
 }
 
+function showToast(msg, type='info'){
+  const icons={success:'✅',error:'❌',info:'🔔'};
+  const wrap=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className=`toast toast-${type}`;
+  t.innerHTML=`<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>t.classList.add('show')); });
+  setTimeout(()=>{
+    t.classList.remove('show');
+    setTimeout(()=>t.remove(), 350);
+  }, 3500);
+}
+
 function openProductModal(id){
   const p=loadProducts().find(x=>x.id===id);
   if(!p)return;
@@ -1056,8 +1081,8 @@ async function saveProduct(){
     renderAdminStats();
     renderAdminTable('');
     renderProducts(currentFilter);
-    showNotif('✓ Produto salvo com sucesso');
-  } catch(e){ alert('Erro ao salvar produto. Tente novamente.'); }
+    showToast(editId ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!', 'success');
+  } catch(e){ showToast('Erro ao salvar produto. Tente novamente.', 'error'); }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1071,8 +1096,9 @@ async function confirmDelete(){
   try{
     await fetch(`/api/products/${deleteId}`,{method:'DELETE'});
     await fetchAndCacheProducts();
-  } catch(e){ alert('Erro ao excluir produto.'); return; }
+  } catch(e){ showToast('Erro ao excluir produto.', 'error'); return; }
   closeConfirm();
+  showToast('Produto excluído.', 'info');
   renderAdminStats();
   renderAdminTable('');
 }
