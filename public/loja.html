@@ -470,6 +470,10 @@ table.admin-table{width:100%;border-collapse:collapse}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
             Produtos
           </a>
+          <a onclick="showAdminTab('pedidos')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Pedidos
+          </a>
           <a onclick="showAdminTab('settings')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
             Configurações
@@ -519,11 +523,32 @@ table.admin-table{width:100%;border-collapse:collapse}
         </div>
 
         <!-- SETTINGS TAB -->
+        <!-- PEDIDOS TAB -->
+        <div id="tabPedidos" style="display:none">
+          <div class="admin-topbar">
+            <div>
+              <h1 class="admin-page-title">Pedidos</h1>
+              <p class="admin-page-sub">Todos os pedidos realizados na loja</p>
+            </div>
+            <button class="btn-add-product" onclick="renderOrders()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-5"/></svg>
+              Atualizar
+            </button>
+          </div>
+          <div class="admin-table-wrap">
+            <div class="admin-table-header">
+              <span class="admin-table-title">Histórico de pedidos</span>
+            </div>
+            <div id="ordersContent" style="padding:1rem"></div>
+          </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
         <div id="tabSettings" style="display:none">
           <div class="admin-topbar">
             <div>
               <h1 class="admin-page-title">Configurações</h1>
-              <p class="admin-page-sub">Configurações da loja e integrações</p>
+              <p class="admin-page-sub">Configurações da loja</p>
             </div>
           </div>
           <div style="background:#161b22;border:1px solid #21262d;padding:1.8rem;max-width:500px">
@@ -538,21 +563,6 @@ table.admin-table{width:100%;border-collapse:collapse}
             </div>
             <button class="btn-save" onclick="changePassword()">Salvar Senha</button>
             <p id="passMsg" style="font-size:.75rem;margin-top:.7rem;display:none"></p>
-          </div>
-          <div style="background:#161b22;border:1px solid #21262d;padding:1.8rem;max-width:500px;margin-top:1.5rem">
-            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#f0d9c8;margin-bottom:.6rem;font-weight:400">Integração Cartpanda</h3>
-            <p style="font-size:.78rem;color:#6e7681;margin-bottom:1rem;line-height:1.7">Configure o domínio base da sua loja Cartpanda. Os links de checkout de cada produto serão gerados automaticamente.</p>
-            <div class="form-group">
-              <label class="form-label">Domínio Cartpanda</label>
-              <input class="form-input" type="text" id="cartpandaDomain" placeholder="Ex: minhaloja.cartpanda.com">
-            </div>
-            <button class="btn-save" onclick="saveCartpanda()">Salvar</button>
-            <p id="cpMsg" style="font-size:.75rem;margin-top:.7rem;display:none"></p>
-          </div>
-          <div style="background:#1a2a1a;border:1px solid #2a3a2a;padding:1.2rem 1.5rem;max-width:500px;margin-top:1.5rem">
-            <p style="font-size:.72rem;color:#3fb950;letter-spacing:.06em;line-height:1.8">
-              💡 <strong>Migração Supabase:</strong> Quando quiser migrar para o Supabase, substitua as funções <code style="background:#0d1117;padding:1px 5px;font-size:.7rem">loadProducts()</code> e <code style="background:#0d1117;padding:1px 5px;font-size:.7rem">saveProducts()</code> por chamadas à API do Supabase. O resto do código permanece igual.
-            </p>
           </div>
         </div>
 
@@ -614,10 +624,7 @@ table.admin-table{width:100%;border-collapse:collapse}
         <label class="form-label">Descrição</label>
         <textarea class="form-textarea" id="fDesc" placeholder="Descreva o produto..."></textarea>
       </div>
-      <div class="form-group full">
-        <label class="form-label">Link Checkout Cartpanda (opcional)</label>
-        <input class="form-input" type="text" id="fCheckout" placeholder="https://suadomain.cartpanda.com/products/...">
-      </div>
+      <input type="hidden" id="fCheckout" value="">
     </div>
     <div class="form-actions">
       <button class="btn-cancel" onclick="closeProductForm()">Cancelar</button>
@@ -939,8 +946,7 @@ async function doLogin(){
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminPanel').style.display='block';
     renderAdminStats(); renderAdminTable('');
-    const s=loadSettings();
-    if(s.cartpandaDomain)document.getElementById('cartpandaDomain').value=s.cartpandaDomain;
+    loadSettings();
   } else {
     document.getElementById('loginError').style.display='block';
   }
@@ -951,11 +957,16 @@ function doLogout(){ showStore(); }
    ADMIN UI
 ══════════════════════════════════════════════════════════ */
 function showAdminTab(tab){
-  document.getElementById('tabProducts').style.display=tab==='products'?'block':'none';
-  document.getElementById('tabSettings').style.display=tab==='settings'?'block':'none';
-  document.querySelectorAll('.sidebar-nav a').forEach((a,i)=>{
-    a.classList.toggle('active',(tab==='products'&&i===0)||(tab==='settings'&&i===1));
+  ['tabProducts','tabPedidos','tabSettings'].forEach(id=>{
+    document.getElementById(id).style.display='none';
   });
+  const map={products:'tabProducts',pedidos:'tabPedidos',settings:'tabSettings'};
+  document.getElementById(map[tab]).style.display='block';
+  document.querySelectorAll('.sidebar-nav a').forEach((a,i)=>{
+    a.classList.toggle('active',
+      (tab==='products'&&i===0)||(tab==='pedidos'&&i===1)||(tab==='settings'&&i===2));
+  });
+  if(tab==='pedidos') renderOrders();
 }
 
 function renderAdminStats(){
@@ -1120,11 +1131,42 @@ async function changePassword(){
   document.getElementById('newPass').value='';
   document.getElementById('confirmPass').value='';
 }
-function saveCartpanda(){
-  const domain=document.getElementById('cartpandaDomain').value.trim();
-  const s=loadSettings(); s.cartpandaDomain=domain; saveSettings(s);
-  const msg=document.getElementById('cpMsg');
-  msg.style.display='block'; msg.style.color='#3fb950'; msg.textContent='Domínio salvo com sucesso!';
+async function renderOrders(){
+  const el=document.getElementById('ordersContent');
+  el.innerHTML='<p style="color:#6e7681;font-size:.82rem;padding:.5rem 0">Carregando pedidos…</p>';
+  try{
+    const res=await fetch('/api/admin/orders');
+    const orders=await res.json();
+    if(!orders.length){
+      el.innerHTML='<p style="color:#6e7681;font-size:.82rem;padding:1.5rem 0;text-align:center">Nenhum pedido ainda.</p>';
+      return;
+    }
+    const statusLabel={pending:'Aguardando',approved:'Aprovado',rejected:'Recusado',in_process:'Em análise',cancelled:'Cancelado'};
+    const statusClass={pending:'badge-inactive',approved:'badge-active',rejected:'badge-inactive',in_process:'badge-cat',cancelled:'badge-cat'};
+    el.innerHTML=`<table class="admin-table" style="width:100%">
+      <thead><tr>
+        <th>#</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Status</th><th>Data</th>
+      </tr></thead>
+      <tbody>${orders.map(o=>`<tr>
+        <td style="font-size:.75rem;color:#6e7681">${o.mp_id||o.id}</td>
+        <td>
+          <div style="font-size:.83rem;color:#c9d1d9">${o.customer_name||'-'}</div>
+          <div style="font-size:.72rem;color:#6e7681">${o.customer_email||''}</div>
+        </td>
+        <td style="font-size:.78rem;color:#8b949e;max-width:180px">${
+          Array.isArray(o.items)?o.items.map(i=>`${i.name} x${i.quantity}`).join(', '):o.items||'-'
+        }</td>
+        <td style="color:#b8935a;font-family:'Cormorant Garamond',serif;font-size:1rem">
+          R$ ${Number(o.total||0).toFixed(2).replace('.',',')}
+        </td>
+        <td><span class="badge-cat">${o.payment_method==='pix'?'PIX':'Cartão'}</span></td>
+        <td><span class="badge-cat ${statusClass[o.status]||'badge-cat'}">${statusLabel[o.status]||o.status}</span></td>
+        <td style="font-size:.72rem;color:#6e7681">${new Date(o.created_at).toLocaleDateString('pt-BR')}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e){
+    el.innerHTML='<p style="color:#f85149;font-size:.82rem">Erro ao carregar pedidos.</p>';
+  }
 }
 
 /* ══════════════════════════════════════════════════════════

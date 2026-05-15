@@ -78,3 +78,37 @@ export async function dbDeleteProduct(id: number): Promise<void> {
   })
   if (!res.ok) throw new Error(await res.text())
 }
+
+// ─── Orders ───────────────────────────────────────────────
+
+export interface OrderInsert {
+  mp_id: string
+  customer_name: string
+  customer_email: string
+  customer_cpf?: string
+  customer_phone?: string
+  city?: string
+  state?: string
+  items: unknown
+  total: number
+  payment_method: string
+  status: string
+}
+
+export async function dbCreateOrder(order: OrderInsert): Promise<void> {
+  const res = await fetch(`${SB_URL}/rest/v1/orders`, {
+    method: 'POST',
+    headers: { ...headers, Prefer: 'return=minimal' },
+    body: JSON.stringify(order),
+  })
+  if (!res.ok) console.error('[dbCreateOrder]', await res.text())
+}
+
+export async function dbGetOrders(): Promise<unknown[]> {
+  const res = await fetch(
+    `${SB_URL}/rest/v1/orders?select=*&order=created_at.desc`,
+    { headers, cache: 'no-store' },
+  )
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}

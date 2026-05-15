@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPixOrder, createCardOrder } from '@/lib/mercadopago'
+import { dbCreateOrder } from '@/lib/supabase'
+import { totalCart } from '@/lib/utils'
 import type { CartItem, PersonalData, AddressData, CardData, PaymentMethod } from '@/types'
 
 export interface CheckoutRequestBody {
@@ -25,11 +27,41 @@ export async function POST(req: NextRequest) {
 
     if (paymentMethod === 'pix') {
       const pixInfo = await createPixOrder(items, personal)
+
+      await dbCreateOrder({
+        mp_id:            pixInfo.orderId,
+        customer_name:    `${personal.firstName} ${personal.lastName}`,
+        customer_email:   personal.email,
+        customer_cpf:     personal.cpf,
+        customer_phone:   personal.phone,
+        city:             address.city,
+        state:            address.state,
+        items:            items,
+        total:            totalCart(items),
+        payment_method:   'pix',
+        status:           'pending',
+      })
+
       return NextResponse.json({ success: true, method: 'pix', pix: pixInfo })
     }
 
     if (paymentMethod === 'credit_card') {
       const result = await createCardOrder(items, personal, card!)
+
+      await dbCreateOrder({
+        mp_id:            result.orderId ?? '',
+        customer_name:    `${personal.firstName} ${personal.lastName}`,
+        customer_email:   personal.email,
+        customer_cpf:     personal.cpf,
+        customer_phone:   personal.phone,
+        city:             address.city,
+        state:            address.state,
+        items:            items,
+        total:            totalCart(items),
+        payment_method:   'credit_card',
+        status:           result.success ? 'approved' : 'rejected',
+      })
+
       return NextResponse.json(result)
     }
 
