@@ -664,8 +664,21 @@ function loadProducts(){
 function saveProducts(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
 function loadSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{}; }catch(e){return {};} }
 function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
-function getAdminCreds(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY))||{user:'admin',pass:'alluri2025'}; }catch(e){return {user:'admin',pass:'alluri2025'};} }
+function getAdminCreds(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY))||{}; }catch(e){return {};} }
 function saveAdminCreds(c){ localStorage.setItem(AUTH_KEY, JSON.stringify(c)); }
+
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function initAdmin(){
+  const c=getAdminCreds();
+  if(!c.passHash){
+    const h=await sha256(atob('YWxsdXJpYWRtaW4='));
+    saveAdminCreds({user:'Admin',passHash:h});
+  }
+}
 
 function getDefaultProducts(){
   return [
@@ -883,11 +896,12 @@ function showAdminLogin(){
   document.getElementById('loginError').style.display='none';
   setTimeout(()=>document.getElementById('loginUser').focus(),100);
 }
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
   const creds=getAdminCreds();
-  if(u===creds.user && p===creds.pass){
+  const inputHash=await sha256(p);
+  if(u===creds.user && inputHash===creds.passHash){
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminPanel').style.display='block';
     renderAdminStats(); renderAdminTable('');
@@ -1056,14 +1070,15 @@ function confirmDelete(){
 /* ══════════════════════════════════════════════════════════
    SETTINGS
 ══════════════════════════════════════════════════════════ */
-function changePassword(){
+async function changePassword(){
   const np=document.getElementById('newPass').value;
   const cp=document.getElementById('confirmPass').value;
   const msg=document.getElementById('passMsg');
   if(!np){msg.style.display='block';msg.style.color='#f85149';msg.textContent='Digite a nova senha.';return;}
   if(np!==cp){msg.style.display='block';msg.style.color='#f85149';msg.textContent='As senhas não coincidem.';return;}
+  const h=await sha256(np);
   const creds=getAdminCreds();
-  creds.pass=np;
+  creds.passHash=h; delete creds.pass;
   saveAdminCreds(creds);
   msg.style.display='block'; msg.style.color='#3fb950'; msg.textContent='Senha alterada com sucesso!';
   document.getElementById('newPass').value='';
@@ -1080,6 +1095,7 @@ function saveCartpanda(){
    INIT
 ══════════════════════════════════════════════════════════ */
 renderProducts('todos');
+initAdmin();
 
 // Atalho secreto: Ctrl + Shift + A abre o painel admin
 document.addEventListener('keydown', function(e) {
