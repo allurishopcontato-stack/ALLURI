@@ -116,6 +116,20 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .checkout-note{font-size:.65rem;letter-spacing:.07em;color:var(--muted);text-align:center}
 .btn-add-cart{display:block;width:100%;padding:.75rem;background:transparent;color:var(--dark);border:1px solid var(--dark);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;margin-bottom:.6rem}
 .btn-add-cart:hover{background:var(--rose-light)}
+/* GALERIA MULTI-FOTOS */
+.imgs-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem}
+.img-slot{width:78px;height:98px;position:relative;overflow:hidden;flex-shrink:0}
+.img-slot.empty{border:1px dashed #30363d;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#6e7681;font-size:.68rem;letter-spacing:.06em;transition:all .2s;background:transparent}
+.img-slot.empty:hover{border-color:#b8935a;color:#b8935a}
+.img-slot.filled img{width:100%;height:100%;object-fit:cover;display:block}
+.img-main-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(184,147,90,.85);color:#fff;font-size:.55rem;text-align:center;padding:2px;letter-spacing:.08em;text-transform:uppercase}
+.img-rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);border:none;color:#fff;cursor:pointer;font-size:.62rem;padding:2px 5px;line-height:1;transition:background .15s}
+.img-rm:hover{background:#f85149}
+/* Modal galeria */
+.modal-thumbs{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap}
+.modal-thumb{width:46px;height:58px;cursor:pointer;opacity:.5;border:1px solid transparent;overflow:hidden;flex-shrink:0;transition:all .2s}
+.modal-thumb.active{opacity:1;border-color:var(--gold)}
+.modal-thumb img{width:100%;height:100%;object-fit:cover}
 /* VARIAÇÕES */
 .modal-var-group{margin-bottom:1rem}
 .modal-var-label{font-size:.63rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;display:block}
@@ -310,6 +324,7 @@ table.admin-table{width:100%;border-collapse:collapse}
         <a onclick="filterCat('colar',null)">Colares</a>
         <a onclick="filterCat('pulseira',null)">Pulseiras</a>
         <a onclick="filterCat('anel',null)">Anéis</a>
+        <a onclick="filterCat('calcado',null)">Calçados</a>
       </nav>
       <div class="header-icons">
         <button class="icon-btn">🔍</button>
@@ -351,6 +366,9 @@ table.admin-table{width:100%;border-collapse:collapse}
       </div>
       <div class="cat" onclick="filterCat('anel',this)">
         <span class="cat-icon">💍</span><span class="cat-name">Anéis</span>
+      </div>
+      <div class="cat" onclick="filterCat('calcado',this)">
+        <span class="cat-icon">👠</span><span class="cat-name">Calçados</span>
       </div>
     </div>
   </section>
@@ -411,6 +429,7 @@ table.admin-table{width:100%;border-collapse:collapse}
         <a onclick="filterCat('colar',null)">Colares</a>
         <a onclick="filterCat('pulseira',null)">Pulseiras</a>
         <a onclick="filterCat('anel',null)">Anéis</a>
+        <a onclick="filterCat('calcado',null)">Calçados</a>
       </div>
       <div class="footer-col">
         <h4>Atendimento</h4>
@@ -431,8 +450,11 @@ table.admin-table{width:100%;border-collapse:collapse}
     <div class="modal-box">
       <button class="modal-close" onclick="closeProductModal()">✕</button>
       <div class="modal-inner">
-        <div class="modal-img" id="modalImg">
-          <span class="modal-emoji" id="modalEmoji"></span>
+        <div>
+          <div class="modal-img" id="modalImg">
+            <span class="modal-emoji" id="modalEmoji"></span>
+          </div>
+          <div class="modal-thumbs" id="modalThumbs"></div>
         </div>
         <div>
           <p class="modal-cat" id="modalCat"></p>
@@ -594,13 +616,10 @@ table.admin-table{width:100%;border-collapse:collapse}
     <input type="hidden" id="editingId">
     <div class="form-grid">
       <div class="form-group full">
-        <label class="form-label">Foto do Produto</label>
-        <div class="img-upload-area" id="uploadArea">
-          <div class="img-upload-icon">📷</div>
-          <p class="img-upload-text">Clique ou arraste uma imagem aqui<br><span style="font-size:.65rem;opacity:.6">JPG, PNG, WEBP — máx 5MB</span></p>
-          <input type="file" accept="image/*" onchange="handleImgUpload(event)">
-          <img class="img-preview" id="imgPreview" alt="Preview">
-        </div>
+        <label class="form-label">Fotos do Produto (até 5 — primeira é a capa)</label>
+        <div class="imgs-grid" id="imgsGrid"></div>
+        <input type="file" id="imgFileInput" accept="image/*" style="display:none" multiple onchange="handleMultiImgUpload(event)">
+        <p style="font-size:.65rem;color:#6e7681;margin-top:.3rem">JPG, PNG, WEBP — máx 5MB por foto</p>
       </div>
       <div class="form-group">
         <label class="form-label">Nome do Produto *</label>
@@ -615,6 +634,7 @@ table.admin-table{width:100%;border-collapse:collapse}
           <option value="colar">Colar</option>
           <option value="pulseira">Pulseira</option>
           <option value="anel">Anel</option>
+          <option value="calcado">Calçado</option>
         </select>
       </div>
       <div class="form-group">
@@ -763,7 +783,7 @@ function getDefaultProducts(){
 ══════════════════════════════════════════════════════════ */
 let cartItems=[], currentFilter='todos', currentProduct=null;
 
-function catLabel(c){return {perfume:'Perfume',brinco:'Brinco',colar:'Colar',pulseira:'Pulseira',anel:'Anel'}[c]||c}
+function catLabel(c){return {perfume:'Perfume',brinco:'Brinco',colar:'Colar',pulseira:'Pulseira',anel:'Anel',calcado:'Calçado'}[c]||c}
 
 function renderProducts(filter){
   const grid=document.getElementById('productsGrid');
@@ -773,8 +793,8 @@ function renderProducts(filter){
   grid.innerHTML=list.map(p=>`
     <div class="product-card" onclick="openProductModal(${p.id})">
       <div class="product-img">
-        ${p.img?`<img src="${p.img}" alt="${p.name}">`:''}
-        <span class="emoji-placeholder" ${p.img?'style="display:none"':''}>${p.emoji||'🛍️'}</span>
+        ${(p.images&&p.images[0])||p.img?`<img src="${(p.images&&p.images[0])||p.img}" alt="${p.name}">`:''}
+        <span class="emoji-placeholder" ${(p.images&&p.images[0])||p.img?'style="display:none"':''}>${p.emoji||'🛍️'}</span>
         ${p.badge?`<span class="product-badge">${p.badge}</span>`:''}
       </div>
       <div class="product-info">
@@ -969,18 +989,18 @@ function openProductModal(id){
   const p=loadProducts().find(x=>x.id===id);
   if(!p)return;
   currentProduct=p;
-  const mi=document.getElementById('modalImg');
-  const existImg=mi.querySelector('img');
-  if(existImg)existImg.remove();
-  document.getElementById('modalEmoji').textContent=p.emoji||'🛍️';
-  if(p.img){
-    const img=document.createElement('img');
-    img.src=p.img; img.alt=p.name;
-    img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
-    mi.appendChild(img);
-    document.getElementById('modalEmoji').style.display='none';
+  // Monta galeria
+  const allImgs=Array.isArray(p.images)&&p.images.length?p.images:(p.img?[p.img]:[]);
+  setModalImage(allImgs, 0, p.emoji||'🛍️');
+  // Thumbnails
+  const thumbsEl=document.getElementById('modalThumbs');
+  if(allImgs.length>1){
+    thumbsEl.innerHTML=allImgs.map((src,i)=>`
+      <div class="modal-thumb${i===0?' active':''}" onclick="setModalImage(null,${i},null,this)">
+        <img src="${src}" alt="Foto ${i+1}">
+      </div>`).join('');
   } else {
-    document.getElementById('modalEmoji').style.display='';
+    thumbsEl.innerHTML='';
   }
   document.getElementById('modalCat').textContent=catLabel(p.cat);
   document.getElementById('modalName').textContent=p.name;
@@ -1017,6 +1037,29 @@ function openProductModal(id){
   };
   document.getElementById('productModal').classList.add('open');
 }
+let _modalImgs=[];
+function setModalImage(imgs, index, emoji, thumbEl){
+  if(imgs) _modalImgs=imgs;
+  const src=_modalImgs[index];
+  const mi=document.getElementById('modalImg');
+  mi.querySelectorAll('img').forEach(el=>el.remove());
+  if(src){
+    const img=document.createElement('img');
+    img.src=src; img.alt='Foto';
+    img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+    mi.appendChild(img);
+    document.getElementById('modalEmoji').style.display='none';
+  } else {
+    document.getElementById('modalEmoji').textContent=emoji||'🛍️';
+    document.getElementById('modalEmoji').style.display='';
+  }
+  // Atualiza thumb ativa
+  if(thumbEl){
+    document.querySelectorAll('.modal-thumb').forEach(t=>t.classList.remove('active'));
+    thumbEl.classList.add('active');
+  }
+}
+
 function closeProductModal(){ document.getElementById('productModal').classList.remove('open'); }
 document.getElementById('productModal').addEventListener('click',function(e){if(e.target===this)closeProductModal();});
 
@@ -1112,7 +1155,44 @@ function renderAdminTable(search){
 /* ══════════════════════════════════════════════════════════
    PRODUCT FORM
 ══════════════════════════════════════════════════════════ */
-let currentImg='';
+let currentImg=''; // mantido por compatibilidade
+let currentImages=[]; // array de base64, max 5
+
+function renderImgSlots(){
+  const grid=document.getElementById('imgsGrid');
+  let html=currentImages.map((img,i)=>`
+    <div class="img-slot filled">
+      <img src="${img}" alt="Foto ${i+1}">
+      ${i===0?'<span class="img-main-tag">Capa</span>':''}
+      <button type="button" class="img-rm" onclick="removeImg(${i})">✕</button>
+    </div>`).join('');
+  if(currentImages.length<5){
+    html+=`<div class="img-slot empty" onclick="document.getElementById('imgFileInput').click()">
+      <span>📷</span><span style="font-size:.6rem;margin-top:2px">+ Foto</span>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function removeImg(index){
+  currentImages.splice(index,1);
+  renderImgSlots();
+}
+
+function handleMultiImgUpload(e){
+  const files=Array.from(e.target.files);
+  const remaining=5-currentImages.length;
+  files.slice(0,remaining).forEach(file=>{
+    if(file.size>5*1024*1024){showToast('Imagem muito grande. Máx 5MB.','error');return;}
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      currentImages.push(ev.target.result);
+      renderImgSlots();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value=''; // reset input para permitir re-upload
+}
 
 function toggleVarInput(id, show){
   const el=document.getElementById(id);
@@ -1136,14 +1216,11 @@ function getVariationsFromForm(){
 function openProductForm(id){
   document.getElementById('formTitle').textContent=id?'Editar Produto':'Novo Produto';
   document.getElementById('editingId').value=id||'';
-  currentImg='';
-  const preview=document.getElementById('imgPreview');
-  preview.style.display='none'; preview.src='';
-  document.getElementById('uploadArea').querySelector('.img-upload-icon').style.display='block';
-  document.getElementById('uploadArea').querySelector('.img-upload-text').style.display='block';
+  currentImg=''; currentImages=[];
   if(id){
     const p=loadProducts().find(x=>x.id===id);
     if(p){
+      currentImages=Array.isArray(p.images)&&p.images.length?[...p.images]:(p.img?[p.img]:[]);
       document.getElementById('fName').value=p.name;
       document.getElementById('fCat').value=p.cat;
       document.getElementById('fPrice').value=p.price;
@@ -1173,6 +1250,7 @@ function openProductForm(id){
     document.getElementById('fCat').value='';
     document.getElementById('fStatus').value='active';
   }
+  renderImgSlots();
   document.getElementById('formOverlay').classList.add('open');
 }
 
@@ -1200,7 +1278,7 @@ async function saveProduct(){
   const price=document.getElementById('fPrice').value.trim();
   if(!name||!cat||!price){alert('Preencha os campos obrigatórios: Nome, Categoria e Preço.');return;}
   const editId=document.getElementById('editingId').value;
-  const catEmojis={perfume:'🫧',brinco:'💎',colar:'📿',pulseira:'✨',anel:'💍'};
+  const catEmojis={perfume:'🫧',brinco:'💎',colar:'📿',pulseira:'✨',anel:'💍',calcado:'👠'};
   const data={
     id:editId?parseInt(editId):Date.now(),
     name, cat, price,
@@ -1209,7 +1287,8 @@ async function saveProduct(){
     status:document.getElementById('fStatus').value,
     desc:document.getElementById('fDesc').value.trim(),
     checkoutUrl:document.getElementById('fCheckout').value.trim(),
-    img:currentImg,
+    img:currentImages[0]||'',
+    images:currentImages,
     emoji:catEmojis[cat]||'🛍️',
     variations:getVariationsFromForm()
   };
