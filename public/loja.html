@@ -1236,12 +1236,6 @@ function openProductForm(id){
         if(v.name==='Cor'){ document.getElementById('vCor').checked=true; document.getElementById('vCorOpts').value=(v.options||[]).join(', '); document.getElementById('vCorOpts').style.display='block'; }
         if(v.name==='Numeração'){ document.getElementById('vNum').checked=true; document.getElementById('vNumOpts').value=(v.options||[]).join(', '); document.getElementById('vNumOpts').style.display='block'; }
       });
-      currentImg=p.img||'';
-      if(p.img){
-        preview.src=p.img; preview.style.display='block';
-        document.getElementById('uploadArea').querySelector('.img-upload-icon').style.display='none';
-        document.getElementById('uploadArea').querySelector('.img-upload-text').style.display='none';
-      }
     }
   } else {
     ['fName','fPrice','fOldPrice','fBadge','fDesc','fCheckout'].forEach(id=>document.getElementById(id).value='');
@@ -1257,20 +1251,7 @@ function openProductForm(id){
 function closeProductForm(){ document.getElementById('formOverlay').classList.remove('open'); }
 document.getElementById('formOverlay').addEventListener('click',function(e){if(e.target===this)closeProductForm();});
 
-function handleImgUpload(e){
-  const file=e.target.files[0];
-  if(!file)return;
-  if(file.size>5*1024*1024){alert('Imagem muito grande. Máximo 5MB.');return;}
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    currentImg=ev.target.result;
-    const preview=document.getElementById('imgPreview');
-    preview.src=currentImg; preview.style.display='block';
-    document.getElementById('uploadArea').querySelector('.img-upload-icon').style.display='none';
-    document.getElementById('uploadArea').querySelector('.img-upload-text').style.display='none';
-  };
-  reader.readAsDataURL(file);
-}
+// handleImgUpload substituído por handleMultiImgUpload
 
 async function saveProduct(){
   const name=document.getElementById('fName').value.trim();
