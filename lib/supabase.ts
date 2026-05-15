@@ -104,6 +104,15 @@ export async function dbCreateOrder(order: OrderInsert): Promise<void> {
   if (!res.ok) console.error('[dbCreateOrder]', await res.text())
 }
 
+export async function dbUpdateOrderStatus(mpId: string, status: string): Promise<void> {
+  const res = await fetch(`${SB_URL}/rest/v1/orders?mp_id=eq.${encodeURIComponent(mpId)}`, {
+    method: 'PATCH',
+    headers: { ...headers, Prefer: 'return=minimal' },
+    body: JSON.stringify({ status }),
+  })
+  if (!res.ok) console.error('[dbUpdateOrderStatus]', await res.text())
+}
+
 export async function dbGetOrders(): Promise<unknown[]> {
   const res = await fetch(
     `${SB_URL}/rest/v1/orders?select=*&order=created_at.desc`,

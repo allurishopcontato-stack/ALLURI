@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPixOrder, createCardOrder } from '@/lib/mercadopago'
 import { dbCreateOrder } from '@/lib/supabase'
+import { sendOrderConfirmationEmails } from '@/lib/email'
 import { totalCart } from '@/lib/utils'
 import type { CartItem, PersonalData, AddressData, CardData, PaymentMethod } from '@/types'
 
@@ -61,6 +62,18 @@ export async function POST(req: NextRequest) {
         payment_method:   'credit_card',
         status:           result.success ? 'approved' : 'rejected',
       })
+
+      if (result.success) {
+        await sendOrderConfirmationEmails({
+          orderId:       result.orderId ?? '',
+          customerName:  `${personal.firstName} ${personal.lastName}`,
+          customerEmail: personal.email,
+          items,
+          paymentMethod: 'credit_card',
+          city:          address.city,
+          state:         address.state,
+        })
+      }
 
       return NextResponse.json(result)
     }
