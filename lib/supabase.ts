@@ -14,12 +14,14 @@ type ProductRow = {
   id: number; name: string; cat: string; price: string
   old_price: string; badge: string; description: string
   checkout_url: string; img: string; emoji: string; status: string
+  variations: Array<{ name: string; options: string[] }> | null
 }
 
 export type Product = {
   id: number; name: string; cat: string; price: string
   oldPrice: string; badge: string; desc: string
   checkoutUrl: string; img: string; emoji: string; status: string
+  variations?: Array<{ name: string; options: string[] }>
 }
 
 // ─── Mapeamento DB ↔ App ──────────────────────────────────
@@ -29,6 +31,7 @@ function fromRow(r: ProductRow): Product {
     id: r.id, name: r.name, cat: r.cat, price: r.price,
     oldPrice: r.old_price, badge: r.badge, desc: r.description,
     checkoutUrl: r.checkout_url, img: r.img, emoji: r.emoji, status: r.status,
+    variations: r.variations ?? [],
   }
 }
 
@@ -38,6 +41,7 @@ function toRow(p: Product): Omit<ProductRow, never> {
     old_price: p.oldPrice ?? '', badge: p.badge ?? '',
     description: p.desc ?? '', checkout_url: p.checkoutUrl ?? '',
     img: p.img ?? '', emoji: p.emoji ?? '🛍️', status: p.status ?? 'active',
+    variations: p.variations ?? [],
   }
 }
 

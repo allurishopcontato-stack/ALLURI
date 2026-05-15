@@ -642,21 +642,24 @@ table.admin-table{width:100%;border-collapse:collapse}
       </div>
       <input type="hidden" id="fCheckout" value="">
       <div class="form-group full">
-        <label class="form-label">Variações (opcional)</label>
+        <label class="form-label">Variações (opcional — pode ativar as duas juntas)</label>
         <div class="var-toggle-row">
           <label>
             <input type="checkbox" id="vCor" onchange="toggleVarInput('vCorOpts',this.checked)">
             Cor
           </label>
         </div>
-        <input class="form-input var-opts-input" id="vCorOpts" placeholder="Ex: Dourado, Prateado, Rosé Gold">
-        <div class="var-toggle-row" style="margin-top:.5rem">
+        <input class="form-input var-opts-input" id="vCorOpts" placeholder="Separe por vírgula: Preto, Branco, Bronze, Dourado">
+        <div class="var-toggle-row" style="margin-top:.6rem">
           <label>
             <input type="checkbox" id="vNum" onchange="toggleVarInput('vNumOpts',this.checked)">
             Numeração
           </label>
         </div>
-        <input class="form-input var-opts-input" id="vNumOpts" placeholder="Ex: 34, 35, 36, 37, 38, 39, 40">
+        <input class="form-input var-opts-input" id="vNumOpts" placeholder="Separe por vírgula: 34, 35, 36, 37, 38, 39, 40">
+        <p style="font-size:.68rem;color:#6e7681;margin-top:.5rem;letter-spacing:.04em">
+          💡 Ativando as duas, o cliente escolhe uma cor <strong>e</strong> uma numeração antes de adicionar ao carrinho.
+        </p>
       </div>
     </div>
     <div class="form-actions">
