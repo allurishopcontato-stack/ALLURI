@@ -1097,13 +1097,8 @@ function saveCartpanda(){
 renderProducts('todos');
 initAdmin();
 
-// Atalho secreto: Ctrl + Shift + A abre o painel admin
-document.addEventListener('keydown', function(e) {
-  if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-    e.preventDefault();
-    showAdminLogin();
-  }
-});
+// Acesso admin via URL: loja.html#admin-alluri
+if(window.location.hash === '#admin-alluri') showAdminLogin();
 </script>
 </body>
 </html>
