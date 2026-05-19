@@ -1088,7 +1088,7 @@ function setModalImage(imgs, index, emoji, thumbEl){
   if(src){
     const img=document.createElement('img');
     img.src=src; img.alt='Foto';
-    img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+    img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#f5ece8';
     mi.appendChild(img);
     document.getElementById('modalEmoji').style.display='none';
   } else {
