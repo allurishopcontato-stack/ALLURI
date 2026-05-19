@@ -65,7 +65,7 @@ function buildCustomerEmail(
       </div>
     </div>
     <div style="background:#2a1f1f;padding:16px;text-align:center">
-      <p style="margin:0;color:#9a8080;font-size:11px;letter-spacing:1px">© 2025 Alluri · Pedido #${orderId}</p>
+      <p style="margin:0;color:#9a8080;font-size:11px;letter-spacing:1px">© 2026 Alluri · Pedido #${orderId}</p>
     </div>
   </div>
 </body>

@@ -119,7 +119,17 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .btn-add-cart{display:block;width:100%;padding:.75rem;background:transparent;color:var(--dark);border:1px solid var(--dark);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;margin-bottom:.6rem}
 .btn-add-cart:hover{background:var(--rose-light)}
 /* GALERIA MULTI-FOTOS */
-.imgs-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem}
+.imgs-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem;min-height:50px;padding:.3rem;border:2px dashed transparent;border-radius:2px;transition:all .2s}
+.imgs-grid.drag-over{border-color:#b8935a;background:#1f2937}
+/* Chips de cor */
+.color-chip-list{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.4rem}
+.color-chip{display:flex;align-items:center;gap:.5rem;background:#0d1117;border:1px solid #30363d;padding:.3rem .5rem}
+.color-chip-img{width:30px;height:38px;background:#21262d;cursor:pointer;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#6e7681;transition:all .15s}
+.color-chip-img:hover{border:1px solid #b8935a}
+.color-chip-img img{width:100%;height:100%;object-fit:cover}
+.color-chip-name{font-size:.8rem;color:#c9d1d9;flex:1}
+.color-chip-rm{background:none;border:none;color:#f85149;cursor:pointer;font-size:.75rem;padding:0 4px}
+.cor-add-row{display:flex;gap:.4rem;align-items:center}
 .img-slot{width:78px;height:98px;position:relative;overflow:hidden;flex-shrink:0}
 .img-slot.empty{border:1px dashed #30363d;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#6e7681;font-size:.68rem;letter-spacing:.06em;transition:all .2s;background:transparent}
 .img-slot.empty:hover{border-color:#b8935a;color:#b8935a}
@@ -337,7 +347,7 @@ table.admin-table{width:100%;border-collapse:collapse}
   </header>
 
   <div class="hero">
-    <p class="hero-tag">✦ Nova Coleção 2025</p>
+    <p class="hero-tag">✦ Nova Coleção 2026</p>
     <h1>Elegância que<br><em>conta sua história</em></h1>
     <p>Joias e perfumes pensados para a mulher que celebra sua própria beleza a cada detalhe.</p>
     <button class="btn-hero" onclick="document.getElementById('produtos').scrollIntoView({behavior:'smooth'})">Explorar Coleção</button>
@@ -442,7 +452,7 @@ table.admin-table{width:100%;border-collapse:collapse}
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2025 Alluri · Todos os direitos reservados</span>
+      <span>© 2026 Alluri · Todos os direitos reservados</span>
       <!-- acesso admin removido do visual -->
     </div>
   </footer>
@@ -618,10 +628,10 @@ table.admin-table{width:100%;border-collapse:collapse}
     <input type="hidden" id="editingId">
     <div class="form-grid">
       <div class="form-group full">
-        <label class="form-label">Fotos do Produto (até 5 — primeira é a capa)</label>
+        <label class="form-label">Fotos do Produto (até 8 — primeira é a capa — arraste ou clique)</label>
         <div class="imgs-grid" id="imgsGrid"></div>
         <input type="file" id="imgFileInput" accept="image/*" style="display:none" multiple onchange="handleMultiImgUpload(event)">
-        <p style="font-size:.65rem;color:#6e7681;margin-top:.3rem">JPG, PNG, WEBP — máx 5MB por foto</p>
+        <p style="font-size:.65rem;color:#6e7681;margin-top:.3rem">JPG, PNG, WEBP — máx 5MB por foto · Arraste imagens direto para a área acima</p>
       </div>
       <div class="form-group">
         <label class="form-label">Nome do Produto *</label>
@@ -667,11 +677,18 @@ table.admin-table{width:100%;border-collapse:collapse}
         <label class="form-label">Variações (opcional — pode ativar as duas juntas)</label>
         <div class="var-toggle-row">
           <label>
-            <input type="checkbox" id="vCor" onchange="toggleVarInput('vCorOpts',this.checked)">
-            Cor
+            <input type="checkbox" id="vCor" onchange="toggleCorSection(this.checked)">
+            Cor <span style="font-size:.62rem;color:#6e7681">(cada cor pode ter uma foto própria)</span>
           </label>
         </div>
-        <input class="form-input var-opts-input" id="vCorOpts" placeholder="Separe por vírgula: Preto, Branco, Bronze, Dourado">
+        <div id="corSection" style="display:none;margin-top:.5rem">
+          <div class="color-chip-list" id="colorChipList"></div>
+          <div class="cor-add-row">
+            <input class="form-input" id="corNewInput" placeholder="Nome da cor (ex: Bronze)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addColorOption();}">
+            <button type="button" class="btn-add-variation" onclick="addColorOption()">+ Adicionar</button>
+          </div>
+        </div>
         <div class="var-toggle-row" style="margin-top:.6rem">
           <label>
             <input type="checkbox" id="vNum" onchange="toggleVarInput('vNumOpts',this.checked)">
@@ -877,10 +894,21 @@ function pushToCart(p, variations){
 
 function selectVariation(varName, value, btn){
   selectedVariations[varName]=value;
-  // Desmarca outros botões do mesmo grupo
   document.querySelectorAll(`.var-btn[data-var="${varName}"]`).forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
   document.getElementById('varError').style.display='none';
+  // Troca foto ao selecionar cor
+  if(varName==='Cor' && currentProduct){
+    const corVar=(currentProduct.variations||[]).find(v=>v.name==='Cor');
+    const colorImg=corVar?.colorImages?.[value];
+    if(colorImg){
+      _modalImgs=[colorImg]; setModalImage([colorImg],0,null);
+      document.getElementById('modalThumbs').innerHTML='';
+    } else {
+      const allImgs=Array.isArray(currentProduct.images)&&currentProduct.images.length?currentProduct.images:(currentProduct.img?[currentProduct.img]:[]);
+      setModalImage(allImgs,0,currentProduct.emoji||'🛍️');
+    }
+  }
 }
 
 function updateCartBadge(){
@@ -1157,8 +1185,10 @@ function renderAdminTable(search){
 /* ══════════════════════════════════════════════════════════
    PRODUCT FORM
 ══════════════════════════════════════════════════════════ */
-let currentImg=''; // mantido por compatibilidade
-let currentImages=[]; // array de base64, max 5
+let currentImg=''; // compatibilidade
+let currentImages=[]; // max 8
+let currentColorOptions=[];
+let currentColorImages={};
 
 function renderImgSlots(){
   const grid=document.getElementById('imgsGrid');
@@ -1168,32 +1198,83 @@ function renderImgSlots(){
       ${i===0?'<span class="img-main-tag">Capa</span>':''}
       <button type="button" class="img-rm" onclick="removeImg(${i})">✕</button>
     </div>`).join('');
-  if(currentImages.length<5){
+  if(currentImages.length<8){
     html+=`<div class="img-slot empty" onclick="document.getElementById('imgFileInput').click()">
       <span>📷</span><span style="font-size:.6rem;margin-top:2px">+ Foto</span>
     </div>`;
   }
   grid.innerHTML=html;
+  // Drag & drop
+  grid.ondragover=e=>{e.preventDefault();grid.classList.add('drag-over');};
+  grid.ondragleave=()=>grid.classList.remove('drag-over');
+  grid.ondrop=e=>{
+    e.preventDefault(); grid.classList.remove('drag-over');
+    handleFilesUpload(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')));
+  };
 }
 
-function removeImg(index){
-  currentImages.splice(index,1);
-  renderImgSlots();
-}
-
-function handleMultiImgUpload(e){
-  const files=Array.from(e.target.files);
-  const remaining=5-currentImages.length;
+function handleFilesUpload(files){
+  const remaining=8-currentImages.length;
   files.slice(0,remaining).forEach(file=>{
     if(file.size>5*1024*1024){showToast('Imagem muito grande. Máx 5MB.','error');return;}
     const reader=new FileReader();
-    reader.onload=ev=>{
-      currentImages.push(ev.target.result);
-      renderImgSlots();
-    };
+    reader.onload=ev=>{currentImages.push(ev.target.result);renderImgSlots();};
     reader.readAsDataURL(file);
   });
-  e.target.value=''; // reset input para permitir re-upload
+}
+
+function removeImg(index){currentImages.splice(index,1);renderImgSlots();}
+
+function handleMultiImgUpload(e){
+  handleFilesUpload(Array.from(e.target.files));
+  e.target.value='';
+}
+
+/* ── COR COM FOTOS ── */
+function toggleCorSection(show){
+  document.getElementById('corSection').style.display=show?'block':'none';
+  if(!show){currentColorOptions=[];currentColorImages={};renderColorChips();}
+}
+
+function addColorOption(){
+  const input=document.getElementById('corNewInput');
+  const name=input.value.trim();
+  if(!name||currentColorOptions.includes(name))return;
+  currentColorOptions.push(name);
+  input.value='';
+  renderColorChips();
+}
+
+function removeColorOption(name){
+  currentColorOptions=currentColorOptions.filter(c=>c!==name);
+  delete currentColorImages[name];
+  renderColorChips();
+}
+
+function renderColorChips(){
+  const list=document.getElementById('colorChipList');
+  if(!list)return;
+  list.innerHTML=currentColorOptions.map(name=>`
+    <div class="color-chip">
+      <div class="color-chip-img" onclick="uploadColorImg('${name.replace(/'/g,"\\'")}')">
+        ${currentColorImages[name]?`<img src="${currentColorImages[name]}" alt="${name}">`:' 📷'}
+      </div>
+      <span class="color-chip-name">${name}</span>
+      <button type="button" class="color-chip-rm" onclick="removeColorOption('${name.replace(/'/g,"\\'")}')">✕</button>
+    </div>`).join('');
+}
+
+function uploadColorImg(colorName){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='image/*';
+  input.onchange=e=>{
+    const file=e.target.files[0]; if(!file)return;
+    if(file.size>5*1024*1024){showToast('Imagem muito grande. Máx 5MB.','error');return;}
+    const reader=new FileReader();
+    reader.onload=ev=>{currentColorImages[colorName]=ev.target.result;renderColorChips();};
+    reader.readAsDataURL(file);
+  };
+  input.click();
 }
 
 function toggleVarInput(id, show){
@@ -1204,9 +1285,8 @@ function toggleVarInput(id, show){
 
 function getVariationsFromForm(){
   const vars=[];
-  if(document.getElementById('vCor').checked){
-    const opts=document.getElementById('vCorOpts').value.split(',').map(o=>o.trim()).filter(Boolean);
-    if(opts.length) vars.push({name:'Cor',options:opts});
+  if(document.getElementById('vCor').checked && currentColorOptions.length){
+    vars.push({name:'Cor', options:currentColorOptions, colorImages:{...currentColorImages}});
   }
   if(document.getElementById('vNum').checked){
     const opts=document.getElementById('vNumOpts').value.split(',').map(o=>o.trim()).filter(Boolean);
@@ -1232,17 +1312,25 @@ function openProductForm(id){
       document.getElementById('fDesc').value=p.desc||'';
       document.getElementById('fCheckout').value=p.checkoutUrl||'';
       // Variações
-      ['vCor','vNum'].forEach(id=>{ document.getElementById(id).checked=false; });
-      ['vCorOpts','vNumOpts'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).style.display='none'; });
+      document.getElementById('vCor').checked=false; document.getElementById('corSection').style.display='none';
+      document.getElementById('vNum').checked=false; document.getElementById('vNumOpts').value=''; document.getElementById('vNumOpts').style.display='none';
+      currentColorOptions=[]; currentColorImages={};
       (p.variations||[]).forEach(v=>{
-        if(v.name==='Cor'){ document.getElementById('vCor').checked=true; document.getElementById('vCorOpts').value=(v.options||[]).join(', '); document.getElementById('vCorOpts').style.display='block'; }
+        if(v.name==='Cor'){
+          document.getElementById('vCor').checked=true;
+          document.getElementById('corSection').style.display='block';
+          currentColorOptions=[...(v.options||[])];
+          currentColorImages={...(v.colorImages||{})};
+          renderColorChips();
+        }
         if(v.name==='Numeração'){ document.getElementById('vNum').checked=true; document.getElementById('vNumOpts').value=(v.options||[]).join(', '); document.getElementById('vNumOpts').style.display='block'; }
       });
     }
   } else {
     ['fName','fPrice','fOldPrice','fBadge','fDesc','fCheckout'].forEach(id=>document.getElementById(id).value='');
-    ['vCor','vNum'].forEach(id=>{ document.getElementById(id).checked=false; });
-    ['vCorOpts','vNumOpts'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).style.display='none'; });
+    document.getElementById('vCor').checked=false; document.getElementById('corSection').style.display='none';
+    document.getElementById('vNum').checked=false; document.getElementById('vNumOpts').value=''; document.getElementById('vNumOpts').style.display='none';
+    currentColorOptions=[]; currentColorImages={}; renderColorChips();
     document.getElementById('fCat').value='';
     document.getElementById('fStatus').value='active';
   }
