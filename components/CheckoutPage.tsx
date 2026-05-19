@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import type {
   CartItem,
@@ -51,7 +50,6 @@ const STEPS: { key: CheckoutStep; label: string }[] = [
 ]
 
 export default function CheckoutPage() {
-  const searchParams = useSearchParams()
   const [step, setStep]         = useState<CheckoutStep>('personal')
   const [personal, setPersonal] = useState<PersonalData>()
   const [address, setAddress]   = useState<AddressData>()
@@ -59,8 +57,18 @@ export default function CheckoutPage() {
   const [error, setError]       = useState('')
   const [pixInfo, setPixInfo]   = useState<PixInfo>()
   const [orderId, setOrderId]   = useState('')
+  const [items, setItems]       = useState<CartItem[]>(DEMO_ITEMS)
 
-  const items = parseCartParam(searchParams.get('cart')) || DEMO_ITEMS
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('alluri_cart')
+      if (stored) {
+        const parsed = parseCartParam(stored)
+        if (parsed.length) setItems(parsed)
+      }
+    } catch { /* silencioso */ }
+  }, [])
+
   const total = totalCart(items)
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step)
