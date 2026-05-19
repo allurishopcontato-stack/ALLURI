@@ -55,9 +55,11 @@ export default function CheckoutPage() {
   const [address, setAddress]   = useState<AddressData>()
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
-  const [pixInfo, setPixInfo]   = useState<PixInfo>()
-  const [orderId, setOrderId]   = useState('')
-  const [items, setItems]       = useState<CartItem[]>(DEMO_ITEMS)
+  const [pixInfo, setPixInfo]       = useState<PixInfo>()
+  const [orderId, setOrderId]       = useState('')
+  const [items, setItems]           = useState<CartItem[]>(DEMO_ITEMS)
+  const [shipping, setShipping]     = useState(0)
+  const [couponApplied, setCoupon]  = useState(false)
 
   useEffect(() => {
     try {
@@ -69,7 +71,12 @@ export default function CheckoutPage() {
     } catch { /* silencioso */ }
   }, [])
 
-  const total = totalCart(items)
+  const total = totalCart(items) + shipping
+
+  function applyCoupon() {
+    setShipping(9.90)
+    setCoupon(true)
+  }
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step)
 
@@ -84,9 +91,10 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           personal,
-          address,      // mantido para referência/logs; PIX não usa no MP
+          address,
           paymentMethod: method,
           card,
+          shipping,
         }),
       })
 
@@ -282,7 +290,12 @@ export default function CheckoutPage() {
           {/* Order summary sidebar */}
           {(isFormStep || step === 'pix-pending') && (
             <div>
-              <OrderSummary items={items} />
+              <OrderSummary
+                items={items}
+                shipping={shipping}
+                couponApplied={couponApplied}
+                onApplyCoupon={applyCoupon}
+              />
             </div>
           )}
         </div>

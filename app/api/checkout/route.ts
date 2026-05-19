@@ -11,12 +11,18 @@ export interface CheckoutRequestBody {
   address: AddressData
   paymentMethod: PaymentMethod
   card?: CardData
+  shipping?: number
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: CheckoutRequestBody = await req.json()
-    const { items, personal, address, paymentMethod, card } = body
+    const { items, personal, address, paymentMethod, card, shipping = 0 } = body
+
+    // Adiciona frete como item extra para o total do MP
+    const itemsWithShipping = shipping > 0
+      ? [...items, { id: 0, name: 'Frete', price: shipping, quantity: 1 } as CartItem]
+      : items
 
     if (!items?.length)    return error('Nenhum item no carrinho.', 400)
     if (!personal?.email)  return error('Dados pessoais inválidos.', 400)
@@ -27,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (paymentMethod === 'pix') {
-      const pixInfo = await createPixOrder(items, personal)
+      const pixInfo = await createPixOrder(itemsWithShipping, personal)
 
       await dbCreateOrder({
         mp_id:            pixInfo.orderId,
@@ -39,7 +45,7 @@ export async function POST(req: NextRequest) {
         state:            address.state,
         address_data:     address,
         items:            items,
-        total:            totalCart(items),
+        total:            totalCart(items) + shipping,
         payment_method:   'pix',
         status:           'pending',
       })
@@ -48,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (paymentMethod === 'credit_card') {
-      const result = await createCardOrder(items, personal, card!)
+      const result = await createCardOrder(itemsWithShipping, personal, card!)
 
       await dbCreateOrder({
         mp_id:            result.orderId ?? '',
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
         state:            address.state,
         address_data:     address,
         items:            items,
-        total:            totalCart(items),
+        total:            totalCart(items) + shipping,
         payment_method:   'credit_card',
         status:           result.success ? 'approved' : 'rejected',
       })
