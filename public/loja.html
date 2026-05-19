@@ -869,13 +869,19 @@ function addToCartFromModal(){
 }
 
 function pushToCart(p, variations){
-  // Gera chave única: id + variações selecionadas
   const varKey=Object.values(variations).sort().join('|');
   const cartKey=p.id+'|'+varKey;
   const existing=cartItems.find(i=>i._key===cartKey);
   if(existing){ existing.qty++; }
   else{
     const varLabel=Object.entries(variations).map(([k,v])=>`${k}: ${v}`).join(' · ');
+    // Usa foto da cor selecionada se existir
+    let itemImg=(p.images&&p.images[0])||p.img||'';
+    if(variations['Cor']){
+      const corVar=(p.variations||[]).find(v=>v.name==='Cor');
+      const colorImg=corVar?.colorImages?.[variations['Cor']];
+      if(colorImg) itemImg=colorImg;
+    }
     cartItems.push({
       _key:cartKey,
       id:p.id,
@@ -883,7 +889,7 @@ function pushToCart(p, variations){
       cat:p.cat,
       price:parsePrice(p.price),
       emoji:p.emoji||'🛍️',
-      img:p.img||'',
+      img:itemImg,
       qty:1,
       variations
     });
@@ -990,7 +996,8 @@ function goToCheckout(items){
     price:typeof i.price==='number'?i.price:parsePrice(i.price),
     quantity:i.qty||1,
     emoji:i.emoji||'🛍️',
-    category:catLabel(i.cat)
+    category:catLabel(i.cat),
+    image:i.img||''
   }));
   const param=encodeURIComponent(JSON.stringify(cart));
   window.location.href=CHECKOUT_URL+'?cart='+param;

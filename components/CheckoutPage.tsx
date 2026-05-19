@@ -282,7 +282,7 @@ export default function CheckoutPage() {
 
       {/* Footer */}
       <footer className="border-t border-alluri-border py-5 px-4 text-center text-[0.65rem] text-alluri-muted tracking-[0.08em]">
-        © 2025 Alluri · Pagamentos processados com segurança pelo Mercado Pago
+        © 2026 Alluri · Pagamentos processados com segurança pelo Mercado Pago
       </footer>
     </div>
   )
