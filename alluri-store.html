@@ -64,7 +64,7 @@ section.store-section{max-width:1100px;margin:0 auto;padding:4rem 2rem}
 .product-card{background:var(--card);border:1px solid var(--border);overflow:hidden;transition:all .25s;cursor:pointer}
 .product-card:hover{border-color:var(--rose);transform:translateY(-3px)}
 .product-img{width:100%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative;overflow:hidden;background:#f0e4de}
-.product-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.product-img img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;background:#f5ece8}
 .product-img .emoji-placeholder{position:relative;z-index:1}
 .product-badge{position:absolute;top:.6rem;left:.6rem;background:var(--gold);color:#fff;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;z-index:2}
 .product-info{padding:.9rem 1rem 1.1rem}
@@ -106,7 +106,7 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted)}
 .modal-inner{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
 .modal-img{aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:5rem;background:#f0e4de;overflow:hidden;position:relative}
-.modal-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.modal-img img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;background:#f5ece8}
 .modal-img .modal-emoji{position:relative;z-index:1}
 .modal-cat{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
 .modal-name{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:500;color:var(--dark);margin-bottom:.7rem;line-height:1.2}
@@ -119,7 +119,7 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .btn-add-cart{display:block;width:100%;padding:.75rem;background:transparent;color:var(--dark);border:1px solid var(--dark);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;font-family:'Jost',sans-serif;transition:all .2s;margin-bottom:.6rem}
 .btn-add-cart:hover{background:var(--rose-light)}
 /* GALERIA MULTI-FOTOS */
-.imgs-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem;min-height:50px;padding:.3rem;border:2px dashed transparent;border-radius:2px;transition:all .2s}
+.imgs-grid{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:.4rem;min-height:60px;padding:.3rem;border:2px dashed transparent;border-radius:2px;transition:all .2s}
 .imgs-grid.drag-over{border-color:#b8935a;background:#1f2937}
 /* Chips de cor */
 .color-chip-list{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.4rem}
@@ -130,11 +130,15 @@ footer{background:var(--dark);padding:3rem 2rem 1.8rem}
 .color-chip-name{font-size:.8rem;color:#c9d1d9;flex:1}
 .color-chip-rm{background:none;border:none;color:#f85149;cursor:pointer;font-size:.75rem;padding:0 4px}
 .cor-add-row{display:flex;gap:.4rem;align-items:center}
-.img-slot{width:78px;height:98px;position:relative;overflow:hidden;flex-shrink:0}
+.img-slot{width:90px;height:90px;position:relative;overflow:hidden;flex-shrink:0;cursor:grab}
 .img-slot.empty{border:1px dashed #30363d;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#6e7681;font-size:.68rem;letter-spacing:.06em;transition:all .2s;background:transparent}
 .img-slot.empty:hover{border-color:#b8935a;color:#b8935a}
-.img-slot.filled img{width:100%;height:100%;object-fit:cover;display:block}
+.img-slot.filled{background:#161b22;border:1px solid #30363d}
+.img-slot.filled img{width:100%;height:100%;object-fit:contain;display:block}
+.img-slot.filled.drag-src{opacity:.35}
+.img-slot.filled.drag-target{border:2px solid #b8935a;background:#1f2937}
 .img-main-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(184,147,90,.85);color:#fff;font-size:.55rem;text-align:center;padding:2px;letter-spacing:.08em;text-transform:uppercase}
+.img-drag-hint{position:absolute;top:2px;left:2px;color:rgba(255,255,255,.5);font-size:.65rem;pointer-events:none}
 .img-rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);border:none;color:#fff;cursor:pointer;font-size:.62rem;padding:2px 5px;line-height:1;transition:background .15s}
 .img-rm:hover{background:#f85149}
 /* Modal galeria */
@@ -1198,13 +1202,21 @@ let currentImages=[]; // max 8
 let currentColorOptions=[];
 let currentColorImages={};
 
+let _dragSrcIdx=null;
+
 function renderImgSlots(){
   const grid=document.getElementById('imgsGrid');
   let html=currentImages.map((img,i)=>`
-    <div class="img-slot filled">
+    <div class="img-slot filled" draggable="true"
+      ondragstart="imgDragStart(event,${i})"
+      ondragover="imgDragOver(event,${i})"
+      ondragleave="imgDragLeave(event)"
+      ondrop="imgDrop(event,${i})"
+      ondragend="imgDragEnd(event)">
+      <span class="img-drag-hint">⠿</span>
       <img src="${img}" alt="Foto ${i+1}">
       ${i===0?'<span class="img-main-tag">Capa</span>':''}
-      <button type="button" class="img-rm" onclick="removeImg(${i})">✕</button>
+      <button type="button" class="img-rm" onclick="event.stopPropagation();removeImg(${i})">✕</button>
     </div>`).join('');
   if(currentImages.length<8){
     html+=`<div class="img-slot empty" onclick="document.getElementById('imgFileInput').click()">
@@ -1212,13 +1224,45 @@ function renderImgSlots(){
     </div>`;
   }
   grid.innerHTML=html;
-  // Drag & drop
-  grid.ondragover=e=>{e.preventDefault();grid.classList.add('drag-over');};
+  // Drag & drop de ARQUIVOS (para adicionar novas fotos)
+  grid.ondragover=e=>{
+    if(e.dataTransfer.types.includes('Files')){e.preventDefault();grid.classList.add('drag-over');}
+  };
   grid.ondragleave=()=>grid.classList.remove('drag-over');
   grid.ondrop=e=>{
-    e.preventDefault(); grid.classList.remove('drag-over');
-    handleFilesUpload(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')));
+    grid.classList.remove('drag-over');
+    if(e.dataTransfer.files.length){
+      e.preventDefault();
+      handleFilesUpload(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')));
+    }
   };
+}
+
+function imgDragStart(e,i){
+  _dragSrcIdx=i;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain','img'); // impede conflito com drop de arquivos
+  setTimeout(()=>e.currentTarget.classList.add('drag-src'),0);
+}
+function imgDragOver(e,i){
+  if(_dragSrcIdx===null||_dragSrcIdx===i)return;
+  e.preventDefault(); e.stopPropagation();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.img-slot.filled').forEach(s=>s.classList.remove('drag-target'));
+  e.currentTarget.classList.add('drag-target');
+}
+function imgDragLeave(e){e.currentTarget.classList.remove('drag-target');}
+function imgDrop(e,targetIdx){
+  e.preventDefault(); e.stopPropagation();
+  if(_dragSrcIdx===null||_dragSrcIdx===targetIdx){_dragSrcIdx=null;return;}
+  const moved=currentImages.splice(_dragSrcIdx,1)[0];
+  currentImages.splice(targetIdx,0,moved);
+  _dragSrcIdx=null;
+  renderImgSlots();
+}
+function imgDragEnd(e){
+  _dragSrcIdx=null;
+  renderImgSlots();
 }
 
 function handleFilesUpload(files){
