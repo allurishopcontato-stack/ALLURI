@@ -1005,7 +1005,7 @@ function goToCheckout(items){
   }));
   // Salva no sessionStorage para evitar URL longa com base64
   sessionStorage.setItem('alluri_cart', JSON.stringify(cart));
-  window.location.href=CHECKOUT_URL+'/checkout';
+  window.location.href=CHECKOUT_URL;
 }
 function showNotif(msg){
   const n=document.getElementById('notif');
