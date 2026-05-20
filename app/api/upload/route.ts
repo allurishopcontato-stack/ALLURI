@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
     })
 
     if (!res.ok) {
-      console.error('[upload]', await res.text())
-      return NextResponse.json({ error: 'Erro no upload para o Storage.' }, { status: 500 })
+      const errText = await res.text()
+      console.error('[upload Supabase]', res.status, errText)
+      return NextResponse.json({ error: errText }, { status: 500 })
     }
 
     const url = `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`
