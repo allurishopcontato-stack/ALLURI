@@ -1265,14 +1265,27 @@ function imgDragEnd(e){
   renderImgSlots();
 }
 
-function handleFilesUpload(files){
+async function uploadFileToStorage(file){
+  const fd=new FormData();
+  fd.append('file',file);
+  const res=await fetch('/api/upload',{method:'POST',body:fd});
+  if(!res.ok) throw new Error('Erro no upload');
+  const {url}=await res.json();
+  return url;
+}
+
+async function handleFilesUpload(files){
   const remaining=8-currentImages.length;
-  files.slice(0,remaining).forEach(file=>{
-    if(file.size>5*1024*1024){showToast('Imagem muito grande. Máx 5MB.','error');return;}
-    const reader=new FileReader();
-    reader.onload=ev=>{currentImages.push(ev.target.result);renderImgSlots();};
-    reader.readAsDataURL(file);
-  });
+  const toUpload=Array.from(files).slice(0,remaining);
+  for(const file of toUpload){
+    if(file.size>4*1024*1024){showToast('Imagem muito grande. Máx 4MB.','error');continue;}
+    showToast('Enviando foto...','info');
+    try{
+      const url=await uploadFileToStorage(file);
+      currentImages.push(url);
+      renderImgSlots();
+    } catch{ showToast('Erro ao enviar foto. Tente novamente.','error'); }
+  }
 }
 
 function removeImg(index){currentImages.splice(index,1);renderImgSlots();}
@@ -1319,12 +1332,15 @@ function renderColorChips(){
 function uploadColorImg(colorName){
   const input=document.createElement('input');
   input.type='file'; input.accept='image/*';
-  input.onchange=e=>{
+  input.onchange=async e=>{
     const file=e.target.files[0]; if(!file)return;
-    if(file.size>5*1024*1024){showToast('Imagem muito grande. Máx 5MB.','error');return;}
-    const reader=new FileReader();
-    reader.onload=ev=>{currentColorImages[colorName]=ev.target.result;renderColorChips();};
-    reader.readAsDataURL(file);
+    if(file.size>4*1024*1024){showToast('Imagem muito grande. Máx 4MB.','error');return;}
+    showToast('Enviando foto...','info');
+    try{
+      const url=await uploadFileToStorage(file);
+      currentColorImages[colorName]=url;
+      renderColorChips();
+    } catch{ showToast('Erro ao enviar foto.','error'); }
   };
   input.click();
 }
