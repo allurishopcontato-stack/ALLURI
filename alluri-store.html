@@ -1131,6 +1131,8 @@ async function doLogin(){
   if(u===creds.user && inputHash===creds.passHash){
     document.getElementById('adminLogin').style.display='none';
     document.getElementById('adminPanel').style.display='block';
+    // Garante que os produtos estão carregados antes de renderizar o painel
+    await fetchAndCacheProducts();
     renderAdminStats(); renderAdminTable('');
     loadSettings();
   } else {
@@ -1269,9 +1271,12 @@ async function uploadFileToStorage(file){
   const fd=new FormData();
   fd.append('file',file);
   const res=await fetch('/api/upload',{method:'POST',body:fd});
-  if(!res.ok) throw new Error('Erro no upload');
-  const {url}=await res.json();
-  return url;
+  const data=await res.json();
+  if(!res.ok){
+    console.error('[upload error]', data);
+    throw new Error(data.error||'Erro no upload');
+  }
+  return data.url;
 }
 
 async function handleFilesUpload(files){
@@ -1284,7 +1289,7 @@ async function handleFilesUpload(files){
       const url=await uploadFileToStorage(file);
       currentImages.push(url);
       renderImgSlots();
-    } catch{ showToast('Erro ao enviar foto. Tente novamente.','error'); }
+    } catch(err){ showToast('Erro ao enviar foto: '+(err.message||'tente novamente'),'error'); }
   }
 }
 
