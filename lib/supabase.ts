@@ -1,3 +1,5 @@
+import { unstable_noStore as noStore } from 'next/cache'
+
 const SB_URL = process.env.SUPABASE_URL!
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY!
 
@@ -52,9 +54,10 @@ function toRow(p: Product): Omit<ProductRow, never> {
 // ─── CRUD ─────────────────────────────────────────────────
 
 export async function dbGetProducts(): Promise<Product[]> {
+  noStore()
   const res = await fetch(
     `${SB_URL}/rest/v1/products?select=*&order=created_at.asc`,
-    { headers, next: { revalidate: 0 } },
+    { headers },
   )
   if (!res.ok) throw new Error(await res.text())
   const rows: ProductRow[] = await res.json()
@@ -131,9 +134,10 @@ export async function dbUpdateOrderStatus(mpId: string, status: string): Promise
 }
 
 export async function dbGetOrders(): Promise<unknown[]> {
+  noStore()
   const res = await fetch(
     `${SB_URL}/rest/v1/orders?select=*&order=created_at.desc`,
-    { headers, next: { revalidate: 0 } },
+    { headers },
   )
   if (!res.ok) throw new Error(await res.text())
   return res.json()
