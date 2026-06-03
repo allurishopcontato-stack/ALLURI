@@ -328,14 +328,71 @@ table.admin-table{width:100%;border-collapse:collapse}
 .cart-secure-note{font-size:.6rem;letter-spacing:.06em;color:var(--muted);text-align:center}
 
 @media(max-width:768px){
+  /* Header */
   nav{display:none}
+  header{padding:0 1.2rem}
+  .header-inner{height:62px}
+  .logo-img{height:30px}
+  .icon-btn{padding:4px;font-size:.95rem}
+
+  /* Hero */
+  .hero{padding:4.5rem 1.5rem 4rem;min-height:auto}
+  .hero p{font-size:.82rem;margin-bottom:2rem}
+  .btn-hero,.btn-outline{padding:.85rem 1.8rem;font-size:.62rem;letter-spacing:.18em}
+
+  /* Sections */
+  section.store-section{padding:3.5rem 1.2rem}
+  .section-title{font-size:clamp(1.7rem,6vw,2.4rem)}
+
+  /* Categories */
+  .cats{gap:.4rem}
+  .cat{padding:.7rem 1.1rem}
+
+  /* Products */
+  .products-grid{grid-template-columns:repeat(2,1fr)}
+  .product-name{font-size:1rem}
+  .product-info{padding:.9rem .9rem 0}
+
+  /* Banner */
+  .banner-section{padding:4rem 1.5rem}
+
+  /* Features */
+  .features{grid-template-columns:1fr;gap:2rem}
+
+  /* Footer */
+  .footer-grid{grid-template-columns:1fr;gap:2.5rem}
+  footer{padding:3rem 1.5rem 1.5rem}
+
+  /* Modal */
+  .modal-inner{grid-template-columns:1fr}
+  .modal-box{padding:2rem 1.5rem}
+  .modal-name{font-size:1.6rem}
+
+  /* Cart */
+  .cart-panel{width:100vw}
+
+  /* Admin */
   .admin-layout{grid-template-columns:1fr}
   .admin-sidebar{display:none}
   .admin-stats{grid-template-columns:repeat(2,1fr)}
+  .admin-content{padding:1.5rem 1rem}
   .form-grid{grid-template-columns:1fr}
-  .modal-inner{grid-template-columns:1fr}
-  .features{grid-template-columns:1fr}
-  .footer-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:480px){
+  /* Hero extra pequeno */
+  .hero{padding:3.5rem 1rem 3rem}
+  .hero h1{font-size:clamp(2.4rem,11vw,3.5rem)}
+
+  /* Uma coluna em telas muito pequenas */
+  .products-grid{grid-template-columns:1fr}
+  .admin-stats{grid-template-columns:1fr 1fr}
+
+  /* Seções */
+  section.store-section{padding:3rem 1rem}
+
+  /* Botões hero empilhados */
+  .btn-hero,.btn-outline{width:100%;text-align:center}
 }
 </style>
 </head>
