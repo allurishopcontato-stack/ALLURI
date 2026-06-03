@@ -57,7 +57,7 @@ nav a:hover{color:var(--crimson);border-bottom-color:var(--crimson)}
 .hero p{font-size:.84rem;letter-spacing:.07em;color:var(--muted);max-width:400px;margin:0 auto 2.8rem;line-height:2.1;font-weight:300;position:relative;z-index:1}
 .btn-hero{display:inline-block;padding:.95rem 3rem;background:var(--crimson);color:#fff;font-size:.64rem;letter-spacing:.26em;text-transform:uppercase;text-decoration:none;transition:all .25s;font-family:'Jost',sans-serif;border:1px solid var(--crimson);cursor:pointer;position:relative;z-index:1}
 .btn-hero:hover{background:var(--crimson-dark);border-color:var(--crimson-dark)}
-.btn-outline{display:inline-block;padding:.9rem 2.4rem;border:1px solid var(--ink);color:var(--ink);font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;margin-left:1.2rem;transition:all .25s;font-family:'Jost',sans-serif;cursor:pointer;background:transparent;position:relative;z-index:1}
+.btn-outline{display:inline-block;padding:.9rem 2.4rem;border:1px solid var(--ink);color:var(--ink);font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;transition:all .25s;font-family:'Jost',sans-serif;cursor:pointer;background:transparent;position:relative;z-index:1}
 .btn-outline:hover{background:var(--ink);color:#fff}
 
 /* Sections */
@@ -369,8 +369,10 @@ table.admin-table{width:100%;border-collapse:collapse}
     <p class="hero-tag">✦ Nova Coleção 2026</p>
     <h1>Elegância que<br><em>conta sua história</em></h1>
     <p>Joias e perfumes pensados para a mulher que celebra sua própria beleza a cada detalhe.</p>
-    <button class="btn-hero" onclick="document.getElementById('produtos').scrollIntoView({behavior:'smooth'})">Explorar Coleção</button>
-    <button class="btn-outline" onclick="filterCat('perfume',null)">Nossos Perfumes</button>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1">
+      <button class="btn-hero" onclick="document.getElementById('produtos').scrollIntoView({behavior:'smooth'})">Explorar Coleção</button>
+      <button class="btn-outline" onclick="filterCat('perfume',null)">Nossos Perfumes</button>
+    </div>
   </div>
 
   <section class="store-section">
