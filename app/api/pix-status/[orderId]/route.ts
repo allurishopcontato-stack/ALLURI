@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPixStatus } from '@/lib/mercadopago'
 import { dbUpdateOrderStatus, dbGetOrders } from '@/lib/supabase'
+
+export const dynamic = 'force-dynamic'
 import { sendOrderConfirmationEmails } from '@/lib/email'
 
 export async function GET(
