@@ -54,7 +54,7 @@ function toRow(p: Product): Omit<ProductRow, never> {
 export async function dbGetProducts(): Promise<Product[]> {
   const res = await fetch(
     `${SB_URL}/rest/v1/products?select=*&order=created_at.asc`,
-    { headers, cache: 'no-store' },
+    { headers, next: { revalidate: 0 } },
   )
   if (!res.ok) throw new Error(await res.text())
   const rows: ProductRow[] = await res.json()
@@ -133,7 +133,7 @@ export async function dbUpdateOrderStatus(mpId: string, status: string): Promise
 export async function dbGetOrders(): Promise<unknown[]> {
   const res = await fetch(
     `${SB_URL}/rest/v1/orders?select=*&order=created_at.desc`,
-    { headers, cache: 'no-store' },
+    { headers, next: { revalidate: 0 } },
   )
   if (!res.ok) throw new Error(await res.text())
   return res.json()
